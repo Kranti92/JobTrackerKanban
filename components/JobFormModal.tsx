@@ -4,7 +4,8 @@ import { useState } from 'react';
 import type { JobCard, JobStatus, JobPriority, Resume, JobFormData } from '@/lib/types';
 import { COLUMNS, PRIORITY_META, JOB_SOURCES } from '@/lib/types';
 import { todayISO } from '@/lib/utils';
-import { X, Bookmark } from 'lucide-react';
+import { useRef } from 'react';
+import { X, Bookmark, Upload, Download } from 'lucide-react';
 
 interface Props {
   job?: JobCard;
@@ -12,7 +13,7 @@ interface Props {
   resumes: Resume[];
   onSave: (data: JobFormData) => void;
   onClose: () => void;
-  onAddResume: (name: string) => void;
+  onAddResume: (name: string, fileData?: string, fileType?: string, fileSize?: number) => void;
   onDeleteResume: (id: string) => void;
 }
 
@@ -31,7 +32,8 @@ export default function JobFormModal({
     priority:    job?.priority    ?? 'medium',
     source:      job?.source      ?? '',
   });
-  const [errors, setErrors] = useState<{ companyName?: string; jobTitle?: string }>({});
+  const [errors,    setErrors]    = useState<{ companyName?: string; jobTitle?: string }>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const set = (k: keyof JobFormData) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -55,6 +57,23 @@ export default function JobFormModal({
     if (!name || resumes.some(r => r.name === name)) return;
     onAddResume(name);
   };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const fileData = reader.result as string;
+      setForm(f => ({ ...f, resumeUsed: file.name }));
+      if (!resumes.some(r => r.name === file.name)) {
+        onAddResume(file.name, fileData, file.type, file.size);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const activeResume = resumes.find(r => r.name === form.resumeUsed);
 
   return (
     <div
@@ -124,8 +143,17 @@ export default function JobFormModal({
               placeholder="₹25-30 LPA / $150-180K" className={inputCls()} />
           </Field>
 
-          {/* Resume — text input with datalist */}
+          {/* Resume — upload file or type name */}
           <Field label="Resume Used">
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx"
+              className="hidden"
+              onChange={handleFileUpload}
+            />
+
             <div className="flex gap-2">
               <div className="flex-1">
                 <input
@@ -133,17 +161,33 @@ export default function JobFormModal({
                   value={form.resumeUsed}
                   onChange={set('resumeUsed')}
                   list="resume-list"
-                  placeholder="e.g. SDE_Resume_v3 (type freely or pick below)"
+                  placeholder="Type a name or upload a file…"
                   className={inputCls()}
                 />
                 <datalist id="resume-list">
                   {resumes.map(r => <option key={r.id} value={r.name} />)}
                 </datalist>
               </div>
+
+              {/* Upload file button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                title="Upload PDF / DOC"
+                className="px-3 py-2 rounded-xl text-xs font-bold shrink-0 flex items-center gap-1
+                           bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400
+                           border border-emerald-100 dark:border-emerald-500/20
+                           hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-all"
+              >
+                <Upload size={11} />
+                Upload
+              </button>
+
+              {/* Save name-only preset */}
               <button
                 type="button"
                 onClick={saveResumeName}
-                title="Save for future use"
+                title="Save name as preset (no file)"
                 disabled={!form.resumeUsed.trim() || resumes.some(r => r.name === form.resumeUsed.trim())}
                 className="px-3 py-2 rounded-xl text-xs font-bold shrink-0 flex items-center gap-1
                            bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400
@@ -152,10 +196,31 @@ export default function JobFormModal({
                            disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
                 <Bookmark size={11} />
-                Save
               </button>
             </div>
 
+            <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
+              <strong>Upload</strong> a PDF/DOC to store it locally, or type any name and <strong>bookmark</strong> it as a preset.
+            </p>
+
+            {/* Download link for selected resume with file */}
+            {activeResume?.fileData && (
+              <a
+                href={activeResume.fileData}
+                download={activeResume.name}
+                className="mt-1.5 inline-flex items-center gap-1.5 text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                <Download size={10} />
+                Download {activeResume.name}
+                {activeResume.fileSize && (
+                  <span className="font-normal text-slate-400">
+                    ({Math.round(activeResume.fileSize / 1024)} KB)
+                  </span>
+                )}
+              </a>
+            )}
+
+            {/* Saved resumes as chips */}
             {resumes.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {resumes.map(r => (
@@ -166,6 +231,7 @@ export default function JobFormModal({
                         ? 'bg-brand-50 dark:bg-brand-500/20 border-brand-200 dark:border-brand-500/40 text-brand-600 dark:text-brand-400 font-bold'
                         : 'bg-slate-100 dark:bg-white/[0.06] border-slate-200 dark:border-white/[0.08] text-slate-500 dark:text-slate-400'
                       }`}>
+                    {r.fileData && <span className="text-emerald-500">↑</span>}
                     {r.name}
                     <span onPointerDown={e => e.stopPropagation()}
                       onClick={e => { e.stopPropagation(); onDeleteResume(r.id); }}

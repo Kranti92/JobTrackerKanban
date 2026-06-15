@@ -37,19 +37,19 @@ export default function DashboardStats({ jobs }: Props) {
     emoji: string; label: string; value: string | number; sub?: string;
     from: string; to: string;
   }[] = [
-    { emoji: '📋', label: 'TOTAL',          value: total,         from: '#6366f1', to: '#8b5cf6' },
-    { emoji: '🗂️', label: 'WISHLIST',        value: byStatus('wishlist'),   from: '#64748b', to: '#475569' },
-    { emoji: '📤', label: 'APPLIED',         value: byStatus('applied'),    from: '#3b82f6', to: '#1d4ed8' },
-    { emoji: '🔁', label: 'FOLLOW-UP',       value: byStatus('followup'),   from: '#f59e0b', to: '#d97706' },
-    { emoji: '🎤', label: 'INTERVIEW',       value: byStatus('interview'),  from: '#8b5cf6', to: '#6d28d9' },
-    { emoji: '🎉', label: 'OFFER',           value: byStatus('offer'),      from: '#10b981', to: '#059669' },
-    { emoji: '❌', label: 'REJECTED',        value: byStatus('rejected'),   from: '#ef4444', to: '#b91c1c' },
-    { emoji: '📅', label: 'THIS MONTH',      value: thisMonth,              from: '#06b6d4', to: '#0891b2' },
-    { emoji: '📞', label: 'INTERVIEW RATE',  value: `${interviewRate}%`,    from: '#f97316', to: '#ea580c', sub: 'of applications' },
-    { emoji: '🎯', label: 'SUCCESS RATE',    value: `${successRate}%`,      from: '#22c55e', to: '#16a34a', sub: 'applied → offer' },
-    { emoji: '💼', label: 'OFFER RATE',      value: `${offerRate}%`,        from: '#14b8a6', to: '#0d9488', sub: 'interview → offer' },
-    { emoji: '⏱️', label: 'AVG DAYS→OFFER',  value: `${avgDaysOffer}d`,     from: '#a855f7', to: '#7c3aed', sub: 'applied to offer' },
-    { emoji: '⌛', label: 'AVG DAYS→REJ',    value: `${avgDaysRejected}d`,  from: '#ec4899', to: '#be185d', sub: 'applied to reject' },
+    { emoji: '🗃️',  label: 'TOTAL',           value: total,                  from: '#6366f1', to: '#8b5cf6' },
+    { emoji: '🌟',  label: 'WISHLIST',         value: byStatus('wishlist'),   from: '#64748b', to: '#475569' },
+    { emoji: '🚀',  label: 'APPLIED',          value: byStatus('applied'),    from: '#3b82f6', to: '#1d4ed8' },
+    { emoji: '🔔',  label: 'FOLLOW-UP',        value: byStatus('followup'),   from: '#f59e0b', to: '#d97706' },
+    { emoji: '🎙️',  label: 'INTERVIEW',        value: byStatus('interview'),  from: '#8b5cf6', to: '#6d28d9' },
+    { emoji: '🏆',  label: 'OFFER',            value: byStatus('offer'),      from: '#10b981', to: '#059669' },
+    { emoji: '💪',  label: 'REJECTED',         value: byStatus('rejected'),   from: '#ef4444', to: '#b91c1c', sub: 'keep going!' },
+    { emoji: '📆',  label: 'THIS MONTH',       value: thisMonth,              from: '#06b6d4', to: '#0891b2' },
+    { emoji: '📊',  label: 'INTERVIEW RATE',   value: `${interviewRate}%`,    from: '#f97316', to: '#ea580c', sub: 'of applications' },
+    { emoji: '🎯',  label: 'SUCCESS RATE',     value: `${successRate}%`,      from: '#22c55e', to: '#16a34a', sub: 'applied → offer' },
+    { emoji: '💼',  label: 'OFFER RATE',       value: `${offerRate}%`,        from: '#14b8a6', to: '#0d9488', sub: 'interview → offer' },
+    { emoji: '⚡',  label: 'AVG DAYS→OFFER',   value: `${avgDaysOffer}d`,     from: '#a855f7', to: '#7c3aed', sub: 'applied to offer' },
+    { emoji: '🔄',  label: 'AVG DAYS→REJ',     value: `${avgDaysRejected}d`,  from: '#ec4899', to: '#be185d', sub: 'applied to reject' },
   ];
 
   return (

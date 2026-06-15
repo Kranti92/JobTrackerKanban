@@ -175,12 +175,13 @@ function ResumeAnalytics({ jobs, resumes }: { jobs: JobCard[]; resumes: Resume[]
   ];
 
   const rows = allResumeNames.map(name => {
-    const used  = jobs.filter(j => j.resumeUsed === name);
-    const inter = used.filter(j => j.status === 'interview' || j.status === 'offer').length;
-    const offer = used.filter(j => j.status === 'offer').length;
-    const iRate = used.length > 0 ? Math.round((inter / used.length) * 100) : 0;
-    const oRate = used.length > 0 ? Math.round((offer / used.length) * 100) : 0;
-    return { name, count: used.length, iRate, oRate };
+    const resume = resumes.find(r => r.name === name);
+    const used   = jobs.filter(j => j.resumeUsed === name);
+    const inter  = used.filter(j => j.status === 'interview' || j.status === 'offer').length;
+    const offer  = used.filter(j => j.status === 'offer').length;
+    const iRate  = used.length > 0 ? Math.round((inter / used.length) * 100) : 0;
+    const oRate  = used.length > 0 ? Math.round((offer / used.length) * 100) : 0;
+    return { name, count: used.length, iRate, oRate, fileData: resume?.fileData, fileSize: resume?.fileSize };
   }).sort((a, b) => b.count - a.count);
 
   return (
@@ -208,7 +209,18 @@ function ResumeAnalytics({ jobs, resumes }: { jobs: JobCard[]; resumes: Resume[]
             <tbody>
               {rows.map(r => (
                 <tr key={r.name} className="border-b border-slate-50 dark:border-white/[0.03] last:border-0">
-                  <td className="py-2 font-medium text-slate-700 dark:text-slate-300 max-w-[140px] truncate">{r.name}</td>
+                  <td className="py-2 font-medium text-slate-700 dark:text-slate-300 max-w-[140px]">
+                    <div className="flex items-center gap-1.5">
+                      {r.fileData
+                        ? <a href={r.fileData} download={r.name} title={`Download ${r.name}`}
+                            className="text-emerald-500 hover:text-emerald-600 transition-colors shrink-0" onClick={e => e.stopPropagation()}>
+                            ⬇
+                          </a>
+                        : <span className="text-slate-300 dark:text-slate-600 shrink-0 text-[10px]">📄</span>
+                      }
+                      <span className="truncate">{r.name}</span>
+                    </div>
+                  </td>
                   <td className="py-2 text-right text-slate-500 dark:text-slate-400">{r.count}x</td>
                   <td className="py-2 text-right">
                     <span className={r.iRate > 0 ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-300 dark:text-slate-600'}>
@@ -366,10 +378,61 @@ function InterviewFunnel({ jobs }: { jobs: JobCard[] }) {
   );
 }
 
+/* ─── About Banner ────────────────────────────────── */
+function AboutBanner() {
+  const [open, setOpen] = useState(true);
+  if (!open) return (
+    <button onClick={() => setOpen(true)}
+      className="text-[10px] font-bold text-brand-500 hover:underline mb-1">
+      Show about ▾
+    </button>
+  );
+  return (
+    <div className="rounded-2xl border border-brand-200 dark:border-brand-500/20
+                    bg-gradient-to-r from-brand-50 to-violet-50 dark:from-brand-500/5 dark:to-violet-500/5
+                    p-4 flex gap-4 items-start">
+      <div className="text-3xl shrink-0">🎯</div>
+      <div className="flex-1">
+        <h2 className="font-extrabold text-sm text-slate-900 dark:text-white mb-1">
+          About Job Tracker Kanban
+        </h2>
+        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+          Built for <strong>QA Engineers, Developers &amp; every job seeker</strong> who wants a clear picture of their hunt.
+          Track applications from wishlist to offer, measure your interview conversion rate, see which resume gets callbacks,
+          hit monthly application goals, and stay motivated through rejections.
+          <span className="text-emerald-600 dark:text-emerald-400 font-bold"> 100% local</span> — stored in your browser's IndexedDB,
+          no account needed, no data ever leaves your device.
+        </p>
+        <div className="flex flex-wrap gap-3 mt-2.5">
+          {[
+            ['🚀', 'Kanban board — drag to move'],
+            ['📊', 'Analytics & funnel metrics'],
+            ['📄', 'Resume file upload & tracking'],
+            ['🎯', 'Monthly application goal'],
+            ['🔍', 'Advanced search & filters'],
+            ['💾', 'Export / Import JSON backup'],
+          ].map(([icon, label]) => (
+            <span key={label} className="inline-flex items-center gap-1 text-[10px] font-semibold
+                                          text-slate-600 dark:text-slate-400">
+              <span>{icon}</span>{label}
+            </span>
+          ))}
+        </div>
+      </div>
+      <button onClick={() => setOpen(false)}
+        className="shrink-0 text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 text-lg leading-none">
+        ×
+      </button>
+    </div>
+  );
+}
+
 /* ─── Main Export ─────────────────────────────────── */
 export default function DashboardAnalytics({ jobs, resumes, monthlyGoal, onSetGoal }: Props) {
   return (
     <div className="px-4 pb-4 space-y-3">
+      {/* About */}
+      <AboutBanner />
       {/* Row 1 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <MonthlyGoal jobs={jobs} goal={monthlyGoal} onSetGoal={onSetGoal} />

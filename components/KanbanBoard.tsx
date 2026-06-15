@@ -21,6 +21,7 @@ import JobFormModal from './JobFormModal';
 import DeleteModal from './DeleteModal';
 import DashboardStats from './DashboardStats';
 import DashboardAnalytics from './DashboardAnalytics';
+import CelebrationOverlay from './CelebrationOverlay';
 
 const DEFAULT_FILTERS: FilterState = {
   search:   '',
@@ -45,6 +46,7 @@ export default function KanbanBoard() {
   const [loaded,       setLoaded]      = useState(false);
   const [view,         setView]        = useState<'dashboard' | 'kanban' | 'both'>('both');
   const [monthlyGoal,  setMonthlyGoalState] = useState(30);
+  const [celebration,  setCelebration] = useState<'offer' | 'rejected' | null>(null);
 
   // ref always holds latest jobs — prevents stale closure in DnD handlers
   const jobsRef = useRef<JobCardType[]>([]);
@@ -160,6 +162,10 @@ export default function KanbanBoard() {
     const updated = { ...activeJob, updatedAt: new Date().toISOString() };
     setJobs(prev => prev.map(j => j.id === activeId ? updated : j));
     await saveJob(updated);
+
+    // Celebrate if moved to offer or rejected
+    if (updated.status === 'offer')    setCelebration('offer');
+    if (updated.status === 'rejected') setCelebration('rejected');
   }, [setJobs]);
 
   /* ─── CRUD ──────────────────────────────────────── */
@@ -184,6 +190,11 @@ export default function KanbanBoard() {
     const updated: JobCardType = { ...editJob, ...data, updatedAt: new Date().toISOString() };
     await saveJob(updated);
     setJobs(prev => prev.map(j => j.id === updated.id ? updated : j));
+    // Celebrate status change to offer/rejected
+    if (editJob.status !== updated.status) {
+      if (updated.status === 'offer')    setCelebration('offer');
+      if (updated.status === 'rejected') setCelebration('rejected');
+    }
     setEditJob(null);
   };
 
@@ -194,8 +205,17 @@ export default function KanbanBoard() {
     setDeleteTarget(null);
   };
 
-  const handleAddResume = async (name: string) => {
-    const r: Resume = { id: newId(), name, createdAt: new Date().toISOString() };
+  const handleAddResume = async (name: string, fileData?: string, fileType?: string, fileSize?: number) => {
+    const existing = resumes.find(r => r.name === name);
+    if (existing) {
+      if (fileData) {
+        const updated: Resume = { ...existing, fileData, fileType, fileSize };
+        await saveResume(updated);
+        setResumes(prev => prev.map(r => r.id === existing.id ? updated : r));
+      }
+      return;
+    }
+    const r: Resume = { id: newId(), name, fileData, fileType, fileSize, createdAt: new Date().toISOString() };
     await saveResume(r);
     setResumes(prev => [...prev, r]);
   };
@@ -335,6 +355,11 @@ export default function KanbanBoard() {
           onClose={() => setDeleteTarget(null)}
         />
       )}
+
+      <CelebrationOverlay
+        kind={celebration}
+        onDone={() => setCelebration(null)}
+      />
     </>
   );
 }

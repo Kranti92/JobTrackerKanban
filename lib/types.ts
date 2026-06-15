@@ -26,6 +26,9 @@ export interface JobCard {
 export interface Resume {
   id: string;
   name: string;
+  fileData?: string;   // base64 data URL
+  fileType?: string;   // MIME type
+  fileSize?: number;   // bytes
   createdAt: string;
 }
 
