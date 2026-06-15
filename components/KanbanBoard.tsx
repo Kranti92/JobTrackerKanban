@@ -22,6 +22,7 @@ import DeleteModal from './DeleteModal';
 import DashboardStats from './DashboardStats';
 import DashboardAnalytics from './DashboardAnalytics';
 import CelebrationOverlay from './CelebrationOverlay';
+import ListView from './ListView';
 
 const DEFAULT_FILTERS: FilterState = {
   search:   '',
@@ -44,7 +45,7 @@ export default function KanbanBoard() {
   const [editJob,      setEditJob]     = useState<JobCardType | null>(null);
   const [deleteTarget, setDeleteTarget]= useState<JobCardType | null>(null);
   const [loaded,       setLoaded]      = useState(false);
-  const [view,         setView]        = useState<'dashboard' | 'kanban' | 'both'>('both');
+  const [view,         setView]        = useState<'dashboard' | 'kanban' | 'both' | 'list'>('both');
   const [monthlyGoal,  setMonthlyGoalState] = useState(30);
   const [celebration,  setCelebration] = useState<'offer' | 'rejected' | null>(null);
 
@@ -251,6 +252,7 @@ export default function KanbanBoard() {
 
   const showDash   = view === 'both' || view === 'dashboard';
   const showKanban = view === 'both' || view === 'kanban';
+  const showList   = view === 'list';
 
   return (
     <>
@@ -291,6 +293,15 @@ export default function KanbanBoard() {
             </span>
             <div className="flex-1 h-px bg-slate-200 dark:bg-white/[0.06]" />
           </div>
+        )}
+
+        {/* List view */}
+        {showList && (
+          <ListView
+            jobs={filteredJobs(jobs)}
+            onEdit={setEditJob}
+            onDelete={setDeleteTarget}
+          />
         )}
 
         {/* Kanban */}

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Moon, Sun, Download, Upload, Plus, Briefcase, Search,
-  ChevronDown, X, SlidersHorizontal, LayoutDashboard, Columns3,
+  ChevronDown, X, SlidersHorizontal, LayoutDashboard, Columns3, List,
 } from 'lucide-react';
 import type { JobStatus, JobPriority, Resume } from '@/lib/types';
 import { COLUMNS, JOB_SOURCES } from '@/lib/types';
@@ -29,8 +29,8 @@ interface Props {
   onImport: (file: File) => void;
   totalJobs: number;
   resumes: Resume[];
-  view: 'dashboard' | 'kanban' | 'both';
-  onViewChange: (v: 'dashboard' | 'kanban' | 'both') => void;
+  view: 'dashboard' | 'kanban' | 'both' | 'list';
+  onViewChange: (v: 'dashboard' | 'kanban' | 'both' | 'list') => void;
 }
 
 export default function Header({
@@ -159,10 +159,11 @@ export default function Header({
         {/* View toggle */}
         <div className="hidden sm:flex items-center rounded-lg border border-slate-200 dark:border-white/[0.08] overflow-hidden">
           {([
-            ['both',      <LayoutDashboard size={11} key="d" />],
-            ['kanban',    <Columns3 size={11} key="k" />],
-          ] as const).map(([v, icon]) => (
-            <button key={v} onClick={() => onViewChange(v)}
+            ['both',   <LayoutDashboard size={11} key="d" />, 'Dashboard + Kanban'],
+            ['kanban', <Columns3 size={11} key="k" />,        'Kanban only'],
+            ['list',   <List size={11} key="l" />,            'List view'],
+          ] as const).map(([v, icon, tip]) => (
+            <button key={v} onClick={() => onViewChange(v)} title={tip}
               className={`px-2.5 py-1.5 transition-all ${
                 view === v
                   ? 'bg-brand-500 text-white'
