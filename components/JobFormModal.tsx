@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import type { JobCard, JobStatus, Resume, JobFormData } from '@/lib/types';
-import { COLUMNS } from '@/lib/types';
+import type { JobCard, JobStatus, JobPriority, Resume, JobFormData } from '@/lib/types';
+import { COLUMNS, PRIORITY_META, JOB_SOURCES } from '@/lib/types';
 import { todayISO } from '@/lib/utils';
-import { X, Plus } from 'lucide-react';
+import { X, Bookmark } from 'lucide-react';
 
 interface Props {
   job?: JobCard;
@@ -28,9 +28,10 @@ export default function JobFormModal({
     salaryRange: job?.salaryRange ?? '',
     notes:       job?.notes       ?? '',
     status:      job?.status      ?? defaultStatus,
+    priority:    job?.priority    ?? 'medium',
+    source:      job?.source      ?? '',
   });
   const [errors, setErrors] = useState<{ companyName?: string; jobTitle?: string }>({});
-  const [newResume, setNewResume] = useState('');
 
   const set = (k: keyof JobFormData) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -49,12 +50,10 @@ export default function JobFormModal({
     if (validate()) onSave(form);
   };
 
-  const addResume = () => {
-    const name = newResume.trim();
-    if (!name) return;
+  const saveResumeName = () => {
+    const name = form.resumeUsed.trim();
+    if (!name || resumes.some(r => r.name === name)) return;
     onAddResume(name);
-    setForm(f => ({ ...f, resumeUsed: name }));
-    setNewResume('');
   };
 
   return (
@@ -75,11 +74,12 @@ export default function JobFormModal({
         </div>
 
         {/* Body */}
-        <form onSubmit={submit} className="flex-1 overflow-y-auto px-6 py-5 space-y-4 scrollbar-thin">
+        <form onSubmit={submit} className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+
           <div className="grid grid-cols-2 gap-3">
             <Field label="Company *" error={errors.companyName}>
               <input type="text" value={form.companyName} onChange={set('companyName')}
-                placeholder="Acme Corp" className={inputCls(!!errors.companyName)} />
+                placeholder="Acme Corp" autoFocus className={inputCls(!!errors.companyName)} />
             </Field>
             <Field label="Job Title *" error={errors.jobTitle}>
               <input type="text" value={form.jobTitle} onChange={set('jobTitle')}
@@ -87,7 +87,7 @@ export default function JobFormModal({
             </Field>
           </div>
 
-          <Field label="LinkedIn URL">
+          <Field label="LinkedIn / Job URL">
             <input type="url" value={form.linkedinUrl} onChange={set('linkedinUrl')}
               placeholder="https://linkedin.com/jobs/view/..." className={inputCls()} />
           </Field>
@@ -96,6 +96,22 @@ export default function JobFormModal({
             <Field label="Status">
               <select value={form.status} onChange={set('status')} className={inputCls()}>
                 {COLUMNS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+              </select>
+            </Field>
+            <Field label="Priority">
+              <select value={form.priority} onChange={set('priority')} className={inputCls()}>
+                {(Object.keys(PRIORITY_META) as JobPriority[]).map(p => (
+                  <option key={p} value={p}>{PRIORITY_META[p].label}</option>
+                ))}
+              </select>
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Source">
+              <select value={form.source} onChange={set('source')} className={inputCls()}>
+                <option value="">— select source —</option>
+                {JOB_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </Field>
             <Field label="Date Applied">
@@ -108,38 +124,55 @@ export default function JobFormModal({
               placeholder="₹25-30 LPA / $150-180K" className={inputCls()} />
           </Field>
 
-          {/* Resume Manager */}
+          {/* Resume — text input with datalist */}
           <Field label="Resume Used">
-            <select value={form.resumeUsed} onChange={set('resumeUsed')} className={inputCls()}>
-              <option value="">— select —</option>
-              {resumes.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
-            </select>
-            <div className="flex gap-2 mt-2">
-              <input
-                type="text"
-                value={newResume}
-                onChange={e => setNewResume(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addResume(); } }}
-                placeholder="Add new resume name..."
-                className={`${inputCls()} py-1.5 text-xs`}
-              />
-              <button type="button" onClick={addResume}
-                className="px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-500/20 text-xs font-bold transition-colors shrink-0">
-                <Plus size={12} />
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  value={form.resumeUsed}
+                  onChange={set('resumeUsed')}
+                  list="resume-list"
+                  placeholder="e.g. SDE_Resume_v3 (type freely or pick below)"
+                  className={inputCls()}
+                />
+                <datalist id="resume-list">
+                  {resumes.map(r => <option key={r.id} value={r.name} />)}
+                </datalist>
+              </div>
+              <button
+                type="button"
+                onClick={saveResumeName}
+                title="Save for future use"
+                disabled={!form.resumeUsed.trim() || resumes.some(r => r.name === form.resumeUsed.trim())}
+                className="px-3 py-2 rounded-xl text-xs font-bold shrink-0 flex items-center gap-1
+                           bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400
+                           border border-brand-100 dark:border-brand-500/20
+                           hover:bg-brand-100 dark:hover:bg-brand-500/20
+                           disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                <Bookmark size={11} />
+                Save
               </button>
             </div>
+
             {resumes.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {resumes.map(r => (
-                  <span key={r.id} className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full
-                                               bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400
-                                               border border-slate-200 dark:border-white/[0.08]">
+                  <button key={r.id} type="button"
+                    onClick={() => setForm(f => ({ ...f, resumeUsed: r.name }))}
+                    className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border transition-all
+                      ${form.resumeUsed === r.name
+                        ? 'bg-brand-50 dark:bg-brand-500/20 border-brand-200 dark:border-brand-500/40 text-brand-600 dark:text-brand-400 font-bold'
+                        : 'bg-slate-100 dark:bg-white/[0.06] border-slate-200 dark:border-white/[0.08] text-slate-500 dark:text-slate-400'
+                      }`}>
                     {r.name}
-                    <button type="button" onClick={() => onDeleteResume(r.id)}
-                      className="hover:text-red-500 transition-colors ml-0.5">
+                    <span onPointerDown={e => e.stopPropagation()}
+                      onClick={e => { e.stopPropagation(); onDeleteResume(r.id); }}
+                      className="ml-0.5 hover:text-red-500 transition-colors cursor-pointer">
                       <X size={9} />
-                    </button>
-                  </span>
+                    </span>
+                  </button>
                 ))}
               </div>
             )}
@@ -147,7 +180,7 @@ export default function JobFormModal({
 
           <Field label="Notes">
             <textarea value={form.notes} onChange={set('notes')}
-              placeholder="Recruiter: Jane, Applied via referral, Round 1 scheduled..."
+              placeholder="Recruiter: Jane, referral via LinkedIn, interview Tue..."
               rows={3} className={`${inputCls()} resize-none`} />
           </Field>
         </form>

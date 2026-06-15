@@ -9,25 +9,18 @@ import { Plus } from 'lucide-react';
 
 interface Props {
   status: JobStatus;
-  jobs: JobCardType[];
-  search: string;
+  jobs: JobCardType[];      // filtered subset shown
+  allJobs: JobCardType[];   // unfiltered count for badge
   onEdit: (job: JobCardType) => void;
   onDelete: (job: JobCardType) => void;
   onAdd: (status: JobStatus) => void;
 }
 
-export default function KanbanColumn({ status, jobs, search, onEdit, onDelete, onAdd }: Props) {
+export default function KanbanColumn({ status, jobs, allJobs, onEdit, onDelete, onAdd }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   const col = COLUMNS.find(c => c.id === status)!;
   const cs  = COLUMN_STYLES[status];
-
-  const filtered = search
-    ? jobs.filter(j =>
-        j.companyName.toLowerCase().includes(search.toLowerCase()) ||
-        j.jobTitle.toLowerCase().includes(search.toLowerCase())
-      )
-    : jobs;
 
   return (
     <div className="flex flex-col w-64 shrink-0">
@@ -37,8 +30,13 @@ export default function KanbanColumn({ status, jobs, search, onEdit, onDelete, o
           <div className={`w-2 h-2 rounded-full ${cs.dot}`} />
           <span className={`font-bold text-sm ${cs.headerText}`}>{col.label}</span>
           <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${cs.badge}`}>
-            {jobs.length}
+            {allJobs.length}
           </span>
+          {jobs.length !== allJobs.length && (
+            <span className="text-[9px] text-slate-400 dark:text-slate-600">
+              ({jobs.length} shown)
+            </span>
+          )}
         </div>
         <button
           onClick={() => onAdd(status)}
@@ -63,15 +61,15 @@ export default function KanbanColumn({ status, jobs, search, onEdit, onDelete, o
         ].join(' ')}
       >
         <SortableContext items={jobs.map(j => j.id)} strategy={verticalListSortingStrategy}>
-          <div className="flex flex-col gap-2 max-h-[calc(100vh-9rem)] overflow-y-auto pr-0.5 scrollbar-thin">
-            {filtered.map(job => (
+          <div className="flex flex-col gap-2 max-h-[calc(100vh-14rem)] overflow-y-auto pr-0.5 scrollbar-thin">
+            {jobs.map(job => (
               <JobCard key={job.id} job={job} onEdit={onEdit} onDelete={onDelete} />
             ))}
 
-            {filtered.length === 0 && (
+            {jobs.length === 0 && (
               <div className="flex flex-col items-center justify-center py-10 text-center pointer-events-none">
                 <p className="text-xs text-slate-300 dark:text-slate-700 font-medium">
-                  {search ? 'No matches' : 'Drop here'}
+                  {allJobs.length > 0 ? 'Filtered out' : 'Drop here'}
                 </p>
               </div>
             )}
