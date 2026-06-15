@@ -63,9 +63,11 @@ export default function Header({
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/60 dark:border-white/[0.06] bg-white/90 dark:bg-[#07091a]/95 backdrop-blur-xl">
       {/* Purpose banner */}
-      <div className="bg-gradient-to-r from-brand-600 via-violet-600 to-accent-500 text-white px-4 py-1.5 text-center">
-        <p className="text-[11px] font-medium opacity-90">
-          Job Tracker Kanban — your personal command centre for job hunting. Track applications, measure interview rates, analyse resume performance &amp; hit monthly goals. 100% local · zero data leaves your browser.
+      <div className="bg-slate-900 dark:bg-slate-950 text-slate-300 px-4 py-1.5 flex items-center justify-center gap-3 border-b border-slate-700/50">
+        <span className="text-[10px] font-semibold tracking-wide uppercase text-slate-400">Job Tracker Kanban</span>
+        <span className="text-slate-700 text-xs">|</span>
+        <p className="text-[11px] text-slate-400">
+          Track every application · measure your funnel · store resumes locally · 100% private
         </p>
       </div>
 
